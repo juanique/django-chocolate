@@ -1,7 +1,9 @@
 from django.test import TestCase
 
 from blog.models import Post, Comment, Movie, Actor
+
 from blog.mockups import factory
+from blog.mockups import tastyfactory
 
 
 class BaseTestCase(TestCase):
@@ -11,6 +13,7 @@ class BaseTestCase(TestCase):
 
     def assertNotEmpty(self, value):
         self.assertTrue(value != [] and value != "")
+
 
 class MockupTests(BaseTestCase):
 
@@ -68,3 +71,26 @@ class MockupForceTests(BaseTestCase):
 
         for movie in Movie.objects.all():
             self.assertEqual(1, len(movie.actors.all()))
+
+
+class MockupResourceTests(BaseTestCase):
+
+    def test_create_resource(self):
+        "It allows the creation of test resources."
+
+        post_uri, post = tastyfactory['post'].create()
+
+        self.assertInstanceOf(Post, post)
+        self.assertInstanceOf(basestring, post_uri)
+
+    def test_example_get(self):
+        "It can generate a sample get response."
+
+        get_data = tastyfactory['post'].create_get_data(content="Some content")
+
+        self.assertInstanceOf(dict, get_data)
+        self.assertEquals("Some content", get_data['content'])
+
+    def test_example_post(self):
+        "It can generate a sample post data."
+        pass
