@@ -1,4 +1,9 @@
 # -*- coding: utf-8 -*-
+
+# from django-mockups: https://github.com/sorl/django-mockups
+# Copyright (c) 2010, Mikko Hellsing
+# All rights reserved.
+
 import datetime
 import os
 import random
