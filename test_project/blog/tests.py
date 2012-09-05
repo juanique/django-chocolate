@@ -39,8 +39,9 @@ class MockupForceTests(BaseTestCase):
         post = factory["post"].create(content="Homer Simpson")
         self.assertEqual('Homer Simpson', post.content)
 
-    def test_related(self):
-        "You can request to-many relationships to be mocked-up as well"
+    def test_related_quantity(self):
+        """You can request to-many relationships to be mocked-up
+        specifing the ammount of related objs."""
 
         post = factory["post"].create(comments=2)
 
@@ -48,7 +49,19 @@ class MockupForceTests(BaseTestCase):
         self.assertEqual(2, len(Comment.objects.all()))
         self.assertEqual(1, len(Post.objects.all()))
 
-    def test_m2m_1(self):
+    def test_related_explicit(self):
+        """You can request to-many relationships to be mocked-up
+        expliciting the related objs."""
+
+        comment1 = factory['comment'].create()
+        comment2 = factory['comment'].create()
+        comments = [comment1, comment2]
+
+        post = factory["post"].create(comments=comments)
+
+        self.assertEqual(set(post.comments.all()), set(comments))
+
+    def test_m2m_quantity_1(self):
         "It handles m2m relationships correctly"
 
         movie = factory['movie'].create(actors=2)
@@ -60,7 +73,7 @@ class MockupForceTests(BaseTestCase):
         for actor in Actor.objects.all():
             self.assertEqual(1, len(actor.movies.all()))
 
-    def test_m2m_2(self):
+    def test_m2m_quantity_2(self):
         "It handles m2m relationships correctly (other side)"
 
         actor = factory['actor'].create(movies=2)
@@ -99,3 +112,12 @@ class MockupResourceTests(BaseTestCase):
         self.assertInstanceOf(dict, post_data)
         self.assertEquals("Some content", post_data['content'])
         self.assertInstanceOf(basestring, post_data['post'])
+
+    def test_example_post_force(self):
+        "When creating mockup test data, foreign rels can be forced."
+
+        blog_post_uri, blog_post = tastyfactory['post'].create()
+        post_data = tastyfactory['comment'].create_post_data(post=blog_post)
+
+        self.assertInstanceOf(dict, post_data)
+        self.assertEquals(blog_post_uri, post_data['post'])
