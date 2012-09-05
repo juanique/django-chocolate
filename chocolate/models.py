@@ -27,8 +27,10 @@ FIELDCLASS_TO_GENERATOR = {
     models.FilePathField: generators.FilePathFieldGenerator,
 }
 
+
 class UnregisteredModel(Exception):
     pass
+
 
 def get_field_from_related_name(model_class, related_name):
     for field in model_class._meta.local_fields:
@@ -64,6 +66,7 @@ class Factory(object):
             return self.mockups[key]
         except KeyError:
             raise UnregisteredModel(key)
+
 
 class MockupData(object):
 
@@ -133,7 +136,7 @@ class MockupData(object):
 
         for tomany_field, values in tomany_data.items():
             manager = getattr(model, tomany_field)
-            related_model =  manager.model
+            related_model = manager.model
 
             reverse_related_name = get_field_from_related_name(related_model, tomany_field)
 
@@ -169,7 +172,8 @@ class MockupData(object):
             except Exception:
                 try:
                     field_obj = getattr(model_class, field)
-                    is_tomany = isinstance(field_obj,
+                    is_tomany = isinstance(
+                        field_obj,
                         ForeignRelatedObjectsDescriptor)
                     is_tomany = is_tomany or isinstance(field_obj, ManyRelatedObjectsDescriptor)
                 except AttributeError:
@@ -177,14 +181,13 @@ class MockupData(object):
                     #defined
                     continue
 
-
             if is_tomany:
                 many.append(field)
             else:
                 regular.append(field)
 
-
         return many, regular
+
 
 class Mockup(object):
 
@@ -192,8 +195,7 @@ class Mockup(object):
         self.model_class = model_class
         self.factory = factory
 
-    def create(self, **kwargs):
-        """Creates a mockup object."""
+    def get_mockup_data(self, **kwargs):
 
         force = kwargs
 
@@ -222,4 +224,9 @@ class Mockup(object):
                         msg %= (model_class.__name__, field.name)
                         raise Exception(msg)
 
-        return model_data.create_model(model_class)
+        return model_data
+
+    def create(self, **kwargs):
+        """Creates a mockup object."""
+
+        return self.get_mockup_data(**kwargs).create_model(self.model_class)

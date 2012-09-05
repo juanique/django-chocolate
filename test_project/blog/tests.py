@@ -93,4 +93,9 @@ class MockupResourceTests(BaseTestCase):
 
     def test_example_post(self):
         "It can generate a sample post data."
-        pass
+
+        post_data = tastyfactory['comment'].create_post_data(content="Some content")
+
+        self.assertInstanceOf(dict, post_data)
+        self.assertEquals("Some content", post_data['content'])
+        self.assertInstanceOf(basestring, post_data['post'])

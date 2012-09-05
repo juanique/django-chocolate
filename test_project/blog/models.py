@@ -7,6 +7,7 @@ class Post(models.Model):
 
 class Comment(models.Model):
     post = models.ForeignKey(Post, related_name='comments')
+    content = models.TextField()
     author = models.ForeignKey(User)
 
 class Actor(models.Model):

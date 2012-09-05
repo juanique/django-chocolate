@@ -36,6 +36,27 @@ class TastyMockup(object):
         else:
             return self.resource.serialize(None, bundle, format)
 
+    def create_post_data(self, format=None, **kwargs):
+        """Obtains a data set which may be posted to create a new
+        object for the mocked up resource.
+
+        """
+        model_class = self.resource._meta.object_class
+        mockup = self.factory.model_factory[model_class].get_mockup_data()
+
+        output = {}
+
+        #for key, value in mockup.data.items():
+        for field in self.resource.fields:
+            print "===%s===" % field
+            try:
+                value = mockup.data[field]
+                print "%s => %s" % (field, value)
+            except KeyError:
+                pass
+
+        return output
+
 
 class TastyFactory(object):
 
