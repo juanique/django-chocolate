@@ -1,5 +1,22 @@
 from tastypie.resources import ModelResource
+from tastypie import fields
+from models import Mockup
+
+import generators
 import json
+
+
+FIELDCLASS_TO_GENERATOR = {
+    fields.BooleanField: generators.BooleanGenerator,
+    fields.DateField: generators.DateGenerator,
+    fields.DateTimeField: generators.DateTimeGenerator,
+    fields.IntegerField: generators.IntegerGenerator,
+    fields.FloatField: generators.FloatGenerator,
+    fields.TimeField: generators.TimeGenerator,
+    # field generators
+    fields.CharField: generators.CharFieldGenerator,
+    fields.DecimalField: generators.DecimalFieldGenerator,
+}
 
 
 class UnregisteredResource(Exception):
@@ -11,12 +28,12 @@ class TastyMockup(object):
     def __init__(self, resource, factory):
         self.resource = resource
         self.factory = factory
+        self.model_class = self.resource._meta.object_class
 
     def create(self, **kwargs):
         "Obtains a mockup model and its uri"
 
-        model_class = self.resource._meta.object_class
-        model = self.factory.model_factory[model_class].create(**kwargs)
+        model = self.factory.model_factory[self.model_class].create(**kwargs)
 
         return self.resource.get_resource_uri(model), model
 
@@ -41,17 +58,48 @@ class TastyMockup(object):
         object for the mocked up resource.
 
         """
-        model_class = self.resource._meta.object_class
-        mockup = self.factory.model_factory[model_class].get_mockup_data()
-
         output = {}
 
         #for key, value in mockup.data.items():
-        for field in self.resource.fields:
-            print "===%s===" % field
+        for field_name, field in self.resource.fields.items():
+
+            if isinstance(field, fields.ForeignKey):
+                related_resource = field.to_class()
+                related_model_class = self.factory[related_resource].model_class
+
+                if kwargs.get(field_name, None).__class__ == related_model_class:
+                    related_obj = kwargs[field_name]
+                else:
+                    related_obj = self.factory.model_factory[related_model_class].create()
+
+                value = related_resource.get_resource_uri(related_obj)
+            else:
+                try:
+                    generator_class = FIELDCLASS_TO_GENERATOR[field.__class__]
+                    attribute = field.attribute
+
+                    if field_name in kwargs:
+                        value = kwargs[field_name]
+                    elif isinstance(attribute, basestring):
+                        model_field = self.model_class._meta.get_field(attribute)
+                        value = Mockup.generate_value(model_field)
+                    else:
+                        if issubclass(generator_class, generators.FieldGenerator):
+                            generator = generator_class(field)
+                        elif issubclass(generator_class, generators.Generator):
+                            generator = generator_class()
+
+                        value = generator.get_value()
+
+                    if value is None:
+                        continue
+                except KeyError:
+                    continue
+
+            output[field_name] = value
+
             try:
-                value = mockup.data[field]
-                print "%s => %s" % (field, value)
+                del output['resource_uri']
             except KeyError:
                 pass
 
@@ -66,7 +114,6 @@ class TastyFactory(object):
         self.mockups = {}
 
         for resource_name, resource in self.api._registry.items():
-            print resource
             model_class = resource._meta.object_class
 
             self.register(resource)

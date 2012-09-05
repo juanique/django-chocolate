@@ -12,7 +12,7 @@ class PostResource(ModelResource):
 
 class CommentResource(ModelResource):
 
-    post = fields.ForeignKey(PostResource, attribute="post")
+    post = fields.ForeignKey("blog.api.PostResource", attribute="post")
 
     class Meta:
         queryset = Comment.objects.all()

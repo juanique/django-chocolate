@@ -567,10 +567,13 @@ class FilePathFieldGenerator(FieldGenerator):
 
 class CharFieldGenerator(FieldGenerator):
     def get_generator(self, field, **kwargs):
-        max_length = field.max_length
-        if max_length < 15:
-            return StringGenerator(max_length=max_length)
-        return LoremSentenceGenerator(common=False, max_length=max_length)
+        try:
+            max_length = field.max_length
+            if max_length < 15:
+                return StringGenerator(max_length=max_length)
+            return LoremSentenceGenerator(common=False, max_length=max_length)
+        except AttributeError: # no max length defined
+            return StringGenerator(max_length=12)
 
 
 class DecimalFieldGenerator(FieldGenerator):

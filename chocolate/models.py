@@ -195,6 +195,24 @@ class Mockup(object):
         self.model_class = model_class
         self.factory = factory
 
+    @staticmethod
+    def generate_value(field, model_data=None):
+        "Obtains a automatically generated value for a given a django model field"
+
+        field_type = type(field)
+        generator_class = FIELDCLASS_TO_GENERATOR[field_type]
+        if issubclass(generator_class, generators.FieldGenerator):
+            generator = generator_class(field)
+        elif issubclass(generator_class, generators.Generator):
+            generator = generator_class()
+        value = generator.get_value()
+        if value is not None:
+
+            if model_data:
+                model_data.set(field.name, value)
+            else:
+                return value
+
     def get_mockup_data(self, **kwargs):
 
         force = kwargs
@@ -204,24 +222,17 @@ class Mockup(object):
 
         fields = model_class._meta.fields
         for field in fields:
-            field_type = type(field)
             if isinstance(field, ForeignKey):
                 related_model = field.rel.to
                 model_data.set(field.name, model=related_model)
             else:
                 try:
-                    generator_class = FIELDCLASS_TO_GENERATOR[field_type]
-                    if issubclass(generator_class, generators.FieldGenerator):
-                        generator = generator_class(field)
-                    elif issubclass(generator_class, generators.Generator):
-                        generator = generator_class()
-                    value = generator.get_value()
-                    if value is not None:
-                        model_data.set(field.name, value)
+                    Mockup.generate_value(field, model_data)
                 except KeyError, e:
                     if e.args[0] != models.fields.AutoField:
-                        msg = "Could not mockup data for %s.%s"
-                        msg %= (model_class.__name__, field.name)
+                        print models.fields.AutoField
+                        msg = "Could not mockup data for %s.%s %s"
+                        msg %= (model_class.__name__, field.name, e.args[0])
                         raise Exception(msg)
 
         return model_data
