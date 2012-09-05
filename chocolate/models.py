@@ -42,7 +42,7 @@ def get_field_from_related_name(model_class, related_name):
     return None
 
 
-class Factory(object):
+class ModelFactory(object):
 
     def __init__(self):
         self.mockups = {}

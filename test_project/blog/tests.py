@@ -2,7 +2,7 @@ from django.test import TestCase
 
 from blog.models import Post, Comment, Movie, Actor
 
-from blog.mockups import factory
+from blog.mockups import modelfactory
 from blog.mockups import tastyfactory
 
 
@@ -18,7 +18,7 @@ class BaseTestCase(TestCase):
 class MockupTests(BaseTestCase):
 
     def setUp(self):
-        self.mock_post = factory["post"].create()
+        self.mock_post = modelfactory["post"].create()
 
     def test_create(self):
         "It creates a mockup object of the model"
@@ -36,14 +36,14 @@ class MockupForceTests(BaseTestCase):
     def test_populate_force(self):
         "You can force a specific value into a field."
 
-        post = factory["post"].create(content="Homer Simpson")
+        post = modelfactory["post"].create(content="Homer Simpson")
         self.assertEqual('Homer Simpson', post.content)
 
     def test_related_quantity(self):
         """You can request to-many relationships to be mocked-up
         specifing the ammount of related objs."""
 
-        post = factory["post"].create(comments=2)
+        post = modelfactory["post"].create(comments=2)
 
         self.assertEqual(2, len(post.comments.all()))
         self.assertEqual(2, len(Comment.objects.all()))
@@ -53,18 +53,18 @@ class MockupForceTests(BaseTestCase):
         """You can request to-many relationships to be mocked-up
         expliciting the related objs."""
 
-        comment1 = factory['comment'].create()
-        comment2 = factory['comment'].create()
+        comment1 = modelfactory['comment'].create()
+        comment2 = modelfactory['comment'].create()
         comments = [comment1, comment2]
 
-        post = factory["post"].create(comments=comments)
+        post = modelfactory["post"].create(comments=comments)
 
         self.assertEqual(set(post.comments.all()), set(comments))
 
     def test_m2m_quantity_1(self):
         "It handles m2m relationships correctly"
 
-        movie = factory['movie'].create(actors=2)
+        movie = modelfactory['movie'].create(actors=2)
 
         self.assertEqual(2, len(movie.actors.all()))
         self.assertEqual(2, len(Actor.objects.all()))
@@ -76,7 +76,7 @@ class MockupForceTests(BaseTestCase):
     def test_m2m_quantity_2(self):
         "It handles m2m relationships correctly (other side)"
 
-        actor = factory['actor'].create(movies=2)
+        actor = modelfactory['actor'].create(movies=2)
 
         self.assertEqual(2, len(actor.movies.all()))
         self.assertEqual(1, len(Actor.objects.all()))
