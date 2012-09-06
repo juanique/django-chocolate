@@ -13,4 +13,4 @@ modelfactory.register(Comment)
 modelfactory.register(Movie)
 modelfactory.register(Actor)
 
-tastyfactory = TastyFactory(modelfactory, api)
+tastyfactory = TastyFactory(api)

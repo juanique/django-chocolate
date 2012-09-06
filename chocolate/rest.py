@@ -1,6 +1,6 @@
 from tastypie.resources import ModelResource
 from tastypie import fields
-from models import Mockup
+from models import Mockup, ModelFactory
 
 import generators
 import json
@@ -108,13 +108,14 @@ class TastyMockup(object):
 
 class TastyFactory(object):
 
-    def __init__(self, model_factory, api):
+    def __init__(self, api):
         self.api = api
-        self.model_factory = model_factory
+        self.model_factory = ModelFactory()
         self.mockups = {}
 
         for resource_name, resource in self.api._registry.items():
             model_class = resource._meta.object_class
+            self.model_factory.register(model_class)
 
             self.register(resource)
             self.model_factory.register(model_class)

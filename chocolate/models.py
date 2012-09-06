@@ -65,6 +65,9 @@ class ModelFactory(object):
         try:
             return self.mockups[key]
         except KeyError:
+            if not isinstance(model, basestring):
+                self.register(model)
+                return self[model]
             raise UnregisteredModel(key)
 
 
