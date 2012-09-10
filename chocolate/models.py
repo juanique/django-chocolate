@@ -11,6 +11,7 @@ FIELDCLASS_TO_GENERATOR = {
     models.DateTimeField: generators.DateTimeGenerator,
     models.EmailField: generators.EmailGenerator,
     models.IntegerField: generators.IntegerGenerator,
+    models.BigIntegerField: generators.IntegerGenerator,
     models.FloatField: generators.FloatGenerator,
     models.IPAddressField: generators.IPAddressGenerator,
     models.NullBooleanField: generators.NullBooleanGenerator,
@@ -233,7 +234,6 @@ class Mockup(object):
                     Mockup.generate_value(field, model_data)
                 except KeyError, e:
                     if e.args[0] != models.fields.AutoField:
-                        print models.fields.AutoField
                         msg = "Could not mockup data for %s.%s %s"
                         msg %= (model_class.__name__, field.name, e.args[0])
                         raise Exception(msg)
