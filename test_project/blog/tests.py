@@ -121,3 +121,15 @@ class MockupResourceTests(BaseTestCase):
 
         self.assertInstanceOf(dict, post_data)
         self.assertEquals(blog_post_uri, post_data['post'])
+
+    def test_create_resource_no_tz(self):
+        """It allows the creation of test resources.
+        with datetime fields even if USE_TZ is set to False
+
+        """
+
+        with self.settings(USE_TZ=False):
+            post_uri, post = tastyfactory['post'].create()
+
+        self.assertInstanceOf(Post, post)
+        self.assertInstanceOf(basestring, post_uri)

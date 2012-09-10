@@ -12,6 +12,7 @@ import string
 import uuid
 from decimal import Decimal
 from django.utils.timezone import now, is_naive, utc
+from django.conf import settings
 
 # backporting os.path.relpath, only availabe in python >= 2.6
 try:
@@ -265,12 +266,12 @@ class DateTimeGenerator(Generator):
         if min_date is not None:
             self.min_date = min_date
         if is_naive(self.min_date):
-            self.min_date = self.min_date.replace(tzinfo=utc)
+            self.min_date = self.min_date.replace(tzinfo=tzinfo)
 
         if max_date is not None:
             self.max_date = max_date
         if is_naive(self.max_date):
-            self.max_date = self.max_date.replace(tzinfo=utc)
+            self.max_date = self.max_date.replace(tzinfo=tzinfo)
 
         assert self.min_date < self.max_date
         super(DateTimeGenerator, self).__init__(*args, **kwargs)
@@ -278,7 +279,10 @@ class DateTimeGenerator(Generator):
     def generate(self):
         diff = self.max_date - self.min_date
         seconds = random.randint(0, diff.days * 3600 * 24 + diff.seconds)
-        return self.min_date + datetime.timedelta(seconds=seconds)
+        output = self.min_date + datetime.timedelta(seconds=seconds)
+        if not settings.USE_TZ:
+            output = output.replace(tzinfo=None)
+        return output
 
 
 class DateGenerator(Generator):

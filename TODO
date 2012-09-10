@@ -1,0 +1,4 @@
+-Change Post model to something else (it's confusing)
+-Should TastyMockup.create call obj_create()?
+-Allow to fix mockup values for certain models.
+-fix email generator function
