@@ -63,6 +63,9 @@ class TastyMockup(object):
         #for key, value in mockup.data.items():
         for field_name, field in self.resource.fields.items():
 
+            if field.readonly:
+                continue
+
             if isinstance(field, fields.ForeignKey):
                 related_resource = field.to_class()
                 related_model_class = self.factory[related_resource].model_class

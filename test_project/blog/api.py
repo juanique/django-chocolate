@@ -13,6 +13,7 @@ class PostResource(ModelResource):
 class CommentResource(ModelResource):
 
     post = fields.ForeignKey("blog.api.PostResource", attribute="post")
+    upvotes = fields.IntegerField(readonly=True)
 
     class Meta:
         queryset = Comment.objects.all()

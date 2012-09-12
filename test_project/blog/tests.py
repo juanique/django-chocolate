@@ -133,3 +133,9 @@ class MockupResourceTests(BaseTestCase):
 
         self.assertInstanceOf(Post, post)
         self.assertInstanceOf(basestring, post_uri)
+
+    def test_no_readonly_post_data(self):
+        """Readonly attributes are not generated for post data."""
+
+        post_data = tastyfactory['comment'].create_post_data()
+        self.assertTrue('upvotes' not in post_data)
