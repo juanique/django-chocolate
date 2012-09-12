@@ -2,14 +2,14 @@ from django.db import models
 from django.contrib.auth.models import User
 
 
-class Post(models.Model):
+class Entry(models.Model):
     content = models.TextField()
     author = models.ForeignKey(User)
     created = models.DateTimeField()
 
 
 class Comment(models.Model):
-    post = models.ForeignKey(Post, related_name='comments')
+    post = models.ForeignKey(Entry, related_name='comments')
     content = models.TextField()
     author = models.ForeignKey(User)
     created = models.DateTimeField()

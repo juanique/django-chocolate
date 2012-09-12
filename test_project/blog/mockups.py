@@ -3,11 +3,11 @@ from chocolate.rest import TastyFactory
 
 from django.contrib.auth.models import User
 
-from models import Post, Comment, Movie, Actor
+from models import Entry, Comment, Movie, Actor
 from api import api
 
 modelfactory = ModelFactory()
-modelfactory.register(Post)
+modelfactory.register(Entry)
 modelfactory.register(User)
 modelfactory.register(Comment)
 modelfactory.register(Movie)
