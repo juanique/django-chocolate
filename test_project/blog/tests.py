@@ -1,9 +1,10 @@
 from django.test import TestCase
+from chocolate.models import ModelFactory, Mockup
+from chocolate.rest import TastyFactory
 
 from blog.models import Entry, Comment, Movie, Actor
-
-from blog.mockups import modelfactory
-from blog.mockups import tastyfactory
+from django.contrib.auth.models import User
+from api import api
 
 
 class BaseTestCase(TestCase):
@@ -15,11 +16,45 @@ class BaseTestCase(TestCase):
         self.assertTrue(value != [] and value != "")
 
 
-class MockupTests(BaseTestCase):
+class ChocolateTestCase(BaseTestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.mock_entry = modelfactory["entry"].create()
+        cls.modelfactory = ModelFactory()
+        cls.modelfactory.register(Entry)
+        cls.modelfactory.register(User)
+        cls.modelfactory.register(Comment)
+        cls.modelfactory.register(Movie)
+        cls.modelfactory.register(Actor)
+
+        cls.tastyfactory = TastyFactory(api)
+
+
+class CustomMockupTestCase(BaseTestCase):
+
+    class UserMockup(Mockup):
+
+        def mockup_data(self, data):
+            data.set("first_name", "Juan")
+
+    @classmethod
+    def setUpClass(cls):
+        cls.modelfactory = ModelFactory()
+        cls.modelfactory.register(User, cls.UserMockup)
+
+    def test_custom_mockup(self):
+        """Custom mockup clases can be used"""
+
+        user = self.modelfactory['user'].create()
+        self.assertEquals("Juan", user.first_name)
+
+
+class MockupTests(ChocolateTestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super(MockupTests, cls).setUpClass()
+        cls.mock_entry = cls.modelfactory["entry"].create()
 
     def test_create(self):
         "It creates a mockup object of the model"
@@ -32,19 +67,19 @@ class MockupTests(BaseTestCase):
         self.assertNotEmpty(self.mock_entry.content)
 
 
-class MockupForceTests(BaseTestCase):
+class MockupForceTests(ChocolateTestCase):
 
     def test_populate_force(self):
         "You can force a specific value into a field."
 
-        entry = modelfactory["entry"].create(content="Homer Simpson")
+        entry = self.modelfactory["entry"].create(content="Homer Simpson")
         self.assertEqual('Homer Simpson', entry.content)
 
     def test_related_quantity(self):
         """You can request to-many relationships to be mocked-up
         specifing the ammount of related objs."""
 
-        entry = modelfactory["entry"].create(comments=2)
+        entry = self.modelfactory["entry"].create(comments=2)
 
         self.assertEqual(2, len(entry.comments.all()))
         self.assertEqual(2, len(Comment.objects.all()))
@@ -54,18 +89,18 @@ class MockupForceTests(BaseTestCase):
         """You can request to-many relationships to be mocked-up
         expliciting the related objs."""
 
-        comment1 = modelfactory['comment'].create()
-        comment2 = modelfactory['comment'].create()
+        comment1 = self.modelfactory['comment'].create()
+        comment2 = self.modelfactory['comment'].create()
         comments = [comment1, comment2]
 
-        entry = modelfactory["entry"].create(comments=comments)
+        entry = self.modelfactory["entry"].create(comments=comments)
 
         self.assertEqual(set(entry.comments.all()), set(comments))
 
     def test_m2m_quantity_1(self):
         "It handles m2m relationships correctly"
 
-        movie = modelfactory['movie'].create(actors=2)
+        movie = self.modelfactory['movie'].create(actors=2)
 
         self.assertEqual(2, len(movie.actors.all()))
         self.assertEqual(2, len(Actor.objects.all()))
@@ -77,7 +112,7 @@ class MockupForceTests(BaseTestCase):
     def test_m2m_quantity_2(self):
         "It handles m2m relationships correctly (other side)"
 
-        actor = modelfactory['actor'].create(movies=2)
+        actor = self.modelfactory['actor'].create(movies=2)
 
         self.assertEqual(2, len(actor.movies.all()))
         self.assertEqual(1, len(Actor.objects.all()))
@@ -87,12 +122,12 @@ class MockupForceTests(BaseTestCase):
             self.assertEqual(1, len(movie.actors.all()))
 
 
-class MockupResourceTests(BaseTestCase):
+class MockupResourceTests(ChocolateTestCase):
 
     def test_create_resource(self):
         "It allows the creation of test resources."
 
-        entry_uri, entry = tastyfactory['entry'].create()
+        entry_uri, entry = self.tastyfactory['entry'].create()
 
         self.assertInstanceOf(Entry, entry)
         self.assertInstanceOf(basestring, entry_uri)
@@ -100,7 +135,7 @@ class MockupResourceTests(BaseTestCase):
     def test_example_get(self):
         "It can generate a sample get response."
 
-        get_data = tastyfactory['entry'].create_get_data(content="Some content")
+        get_data = self.tastyfactory['entry'].create_get_data(content="Some content")
 
         self.assertInstanceOf(dict, get_data)
         self.assertEquals("Some content", get_data['content'])
@@ -108,7 +143,7 @@ class MockupResourceTests(BaseTestCase):
     def test_example_post(self):
         "It can generate a sample post data."
 
-        post_data = tastyfactory['comment'].create_post_data(content="Some content")
+        post_data = self.tastyfactory['comment'].create_post_data(content="Some content")
 
         self.assertInstanceOf(dict, post_data)
         self.assertEquals("Some content", post_data['content'])
@@ -117,8 +152,8 @@ class MockupResourceTests(BaseTestCase):
     def test_example_post_force(self):
         "When creating mockup test data, foreign rels can be forced."
 
-        blog_entry_uri, blog_entry = tastyfactory['entry'].create()
-        post_data = tastyfactory['comment'].create_post_data(entry=blog_entry)
+        blog_entry_uri, blog_entry = self.tastyfactory['entry'].create()
+        post_data = self.tastyfactory['comment'].create_post_data(entry=blog_entry)
 
         self.assertInstanceOf(dict, post_data)
         self.assertEquals(blog_entry_uri, post_data['entry'])
@@ -130,7 +165,7 @@ class MockupResourceTests(BaseTestCase):
         """
 
         with self.settings(USE_TZ=False):
-            entry_uri, entry = tastyfactory['entry'].create()
+            entry_uri, entry = self.tastyfactory['entry'].create()
 
         self.assertInstanceOf(Entry, entry)
         self.assertInstanceOf(basestring, entry_uri)
@@ -138,13 +173,13 @@ class MockupResourceTests(BaseTestCase):
     def test_no_readonly_post_data(self):
         """Readonly attributes are not generated for post data."""
 
-        post_data = tastyfactory['comment'].create_post_data()
+        post_data = self.tastyfactory['comment'].create_post_data()
         self.assertTrue('upvotes' not in post_data)
 
     def test_no_resource_id_postdata(self):
         """The resource_uri and id fields are excluded since they
         are generated on creation"""
 
-        post_data = tastyfactory['comment'].create_post_data()
+        post_data = self.tastyfactory['comment'].create_post_data()
         self.assertTrue('resource_uri' not in post_data)
         self.assertTrue('id' not in post_data)

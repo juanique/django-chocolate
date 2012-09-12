@@ -54,11 +54,13 @@ class ModelFactory(object):
             key = model.__name__
         return key.lower()
 
-    def register(self, model):
+    def register(self, model, mockup_class=None):
         """Registers a model to allow mockup creations of that model."""
 
+        mockup_class = mockup_class or Mockup
+
         key = self.get_key(model)
-        self.mockups[key] = Mockup(model, self)
+        self.mockups[key] = mockup_class(model, self)
 
     def __getitem__(self, model):
         key = self.get_key(model)
@@ -217,6 +219,9 @@ class Mockup(object):
             else:
                 return value
 
+    def mockup_data(self, data):
+        pass
+
     def get_mockup_data(self, **kwargs):
 
         force = kwargs
@@ -224,8 +229,14 @@ class Mockup(object):
         model_class = self.model_class
         model_data = MockupData(force=force, factory=self.factory)
 
+        self.mockup_data(model_data)
+
         fields = model_class._meta.fields
         for field in fields:
+
+            if field.name in model_data.data:
+                continue
+
             if isinstance(field, ForeignKey):
                 related_model = field.rel.to
                 model_data.set(field.name, model=related_model)
