@@ -205,3 +205,28 @@ class MockupResourceTests(ChocolateTestCase):
         post_data = self.tastyfactory['comment'].create_post_data()
         self.assertTrue('resource_uri' not in post_data)
         self.assertTrue('id' not in post_data)
+
+
+class CustomMockupTests(BaseTestCase):
+
+    class CommentMockup(Mockup):
+
+        def mockup_data(self, data, **kwargs):
+            first_name = data.force.get('first_name')
+            user = CustomMockupTestCase.modelfactory['user'].create(first_name=first_name)
+            data.set("author", user)
+
+    @classmethod
+    def setUpClass(cls):
+        cls.modelfactory = ModelFactory()
+        cls.modelfactory.register(Entry)
+        cls.modelfactory.register(User)
+        cls.modelfactory.register(Comment, cls.CommentMockup)
+        cls.modelfactory.register(Movie)
+        cls.modelfactory.register(Actor)
+
+        cls.tastyfactory = TastyFactory(api, cls.modelfactory)
+
+    def test_tasty_factory(self):
+        comment_uri, comment = self.tastyfactory['comment'].create(first_name="Felipe")
+        self.assertEqual("Felipe", comment.author.first_name)
