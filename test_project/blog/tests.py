@@ -1,10 +1,11 @@
+# -*- coding: utf-8 -*-
 from django.test import TestCase
+from django.contrib.auth.models import User
+
 from chocolate.models import ModelFactory, Mockup
 from chocolate.rest import TastyFactory
-
-from blog.models import Entry, Comment, Movie, Actor
-from django.contrib.auth.models import User
 from api import api
+from blog.models import Entry, Comment, Movie, Actor
 
 
 class BaseTestCase(TestCase):
@@ -34,19 +35,40 @@ class CustomMockupTestCase(BaseTestCase):
 
     class UserMockup(Mockup):
 
-        def mockup_data(self, data):
+        def mockup_data(self, data, **kwargs):
             data.set("first_name", "Juan")
+
+    class CommentMockup(Mockup):
+
+        def mockup_data(self, data, **kwargs):
+            first_name = data.force.get('first_name')
+            user = CustomMockupTestCase.modelfactory['user'].create(first_name=first_name)
+            data.set("author", user)
 
     @classmethod
     def setUpClass(cls):
         cls.modelfactory = ModelFactory()
         cls.modelfactory.register(User, cls.UserMockup)
+        cls.modelfactory.register(Comment, cls.CommentMockup)
+
 
     def test_custom_mockup(self):
         """Custom mockup clases can be used"""
 
         user = self.modelfactory['user'].create()
         self.assertEquals("Juan", user.first_name)
+
+    def test_rewrite_default(self):
+        """Custom top default values"""
+
+        user = self.modelfactory['user'].create(first_name="Felipe")
+        self.assertEquals("Felipe", user.first_name)
+
+    def test_custom_nested_mockup(self):
+        """Custom Comment mockup top over default User Mockup"""
+
+        comment = self.modelfactory['comment'].create(first_name="Felipe")
+        self.assertEquals('Felipe', comment.author.first_name)
 
 
 class MockupTests(ChocolateTestCase):
