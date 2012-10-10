@@ -158,9 +158,19 @@ class MockupData(object):
             if type(values) is not list:
                 values = [values]
 
-            for value in values:
-                manager.add(value)
-
+            try:
+                for value in values:
+                    force = {}
+                    for field in manager.through._meta.fields:
+                        if isinstance(field, ForeignKey):
+                            if isinstance(model, field.rel.to):
+                                force[field.name] = model
+                            elif isinstance(value, field.rel.to):
+                                force[field.name] = value
+                    self.factory[manager.through].create(**force)
+            except AttributeError:
+                for value in values:
+                    manager.add(value)
         return model
 
     def get_fields(self, model_class):

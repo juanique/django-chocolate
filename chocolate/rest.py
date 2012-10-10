@@ -111,17 +111,18 @@ class TastyMockup(object):
 
 class TastyFactory(object):
 
-    def __init__(self, api):
+    def __init__(self, api, model_factory=None):
         self.api = api
-        self.model_factory = ModelFactory()
+        self.model_factory = model_factory or ModelFactory()
         self.mockups = {}
 
         for resource_name, resource in self.api._registry.items():
             model_class = resource._meta.object_class
-            self.model_factory.register(model_class)
-
             self.register(resource)
-            self.model_factory.register(model_class)
+            try:
+                model_factory[model_class]
+            except:
+                self.model_factory.register(model_class)
 
     def get_key(self, resource):
         key = resource

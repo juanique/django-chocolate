@@ -577,6 +577,8 @@ class FilePathFieldGenerator(FieldGenerator):
 class CharFieldGenerator(FieldGenerator):
     def get_generator(self, field, **kwargs):
         try:
+            if len(field.choices) > 0:
+                return ChoiceFieldGenerator(field)
             max_length = field.max_length
             if max_length < 15:
                 return StringGenerator(max_length=max_length)
