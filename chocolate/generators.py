@@ -70,6 +70,9 @@ class Generator(object):
         value = self.generate()
         return self.coerce(value)
 
+    def dehydrated_value(self):
+        return unicode(self.get_value())
+
 
 class StaticGenerator(Generator):
     def __init__(self, value, *args, **kwargs):
@@ -204,6 +207,9 @@ class IntegerGenerator(Generator):
         value = random.randint(self.min_value, self.max_value)
         return value
 
+    def dehydrated_vaue(self):
+        return self.generate_value()
+
 
 class SmallIntegerGenerator(IntegerGenerator):
     min_value = -2 ** 7
@@ -236,6 +242,9 @@ class FloatGenerator(Generator):
             float(random.randint(-maxint, maxint)) /
             10 ** self.decimal_places)
         return value
+
+    def dehydrated_value(self):
+        return self.generate_value()
 
 
 class ChoiceGenerator(Generator):
