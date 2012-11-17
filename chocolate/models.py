@@ -1,8 +1,13 @@
-import generators
+# -*- coding: utf-8 -*-
+import types
+
+from django.db.models.fields import NOT_PROVIDED
 from django.db.models.fields.related import ManyToManyField, ForeignKey
 from django.db.models.fields.related import ManyRelatedObjectsDescriptor
 from django.db.models.fields.related import ForeignRelatedObjectsDescriptor
 from django.db import models
+
+import generators
 
 
 FIELDCLASS_TO_GENERATOR = {
@@ -215,15 +220,20 @@ class Mockup(object):
     def generate_value(field, model_data=None):
         "Obtains a automatically generated value for a given a django model field"
 
-        field_type = type(field)
-        generator_class = FIELDCLASS_TO_GENERATOR[field_type]
-        if issubclass(generator_class, generators.FieldGenerator):
-            generator = generator_class(field)
-        elif issubclass(generator_class, generators.Generator):
-            generator = generator_class()
-        value = generator.get_value()
+        if field.default is not NOT_PROVIDED:
+            if type(field.default) in [types.FunctionType, types.LambdaType]:
+                value = field.default()
+            else:
+                value = field.default
+        else:
+            field_type = type(field)
+            generator_class = FIELDCLASS_TO_GENERATOR[field_type]
+            if issubclass(generator_class, generators.FieldGenerator):
+                generator = generator_class(field)
+            elif issubclass(generator_class, generators.Generator):
+                generator = generator_class()
+            value = generator.get_value()
         if value is not None:
-
             if model_data:
                 model_data.set(field.name, value)
             else:

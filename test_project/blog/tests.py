@@ -230,3 +230,12 @@ class CustomMockupTests(BaseTestCase):
     def test_tasty_factory(self):
         comment_uri, comment = self.tastyfactory['comment'].create(first_name="Felipe")
         self.assertEqual("Felipe", comment.author.first_name)
+
+
+class MockupDefaultValues(ChocolateTestCase):
+    
+    def test_check_default_value_on_movie_score(self):
+        "It create a mockup with default values instead random"
+
+        movie = self.modelfactory["movie"].create()
+        self.assertEquals(0 , movie.score)

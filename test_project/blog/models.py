@@ -22,3 +22,4 @@ class Actor(models.Model):
 class Movie(models.Model):
     name = models.CharField(max_length=32)
     actors = models.ManyToManyField(Actor, related_name='movies')
+    score = models.IntegerField(default=0)
