@@ -219,7 +219,7 @@ class Mockup(object):
     @staticmethod
     def generate_value(field, model_data=None):
         "Obtains a automatically generated value for a given a django model field"
-
+        value = None
         if field.default is not NOT_PROVIDED:
             if type(field.default) in [types.FunctionType, types.LambdaType]:
                 value = field.default()
@@ -233,6 +233,12 @@ class Mockup(object):
             elif issubclass(generator_class, generators.Generator):
                 generator = generator_class()
             value = generator.get_value()
+            if field.unique:
+                while True:
+                    try:
+                        field.model.objects.get(**{field.name:value})
+                        value = generator.get_value()
+                    except: break;
         if value is not None:
             if model_data:
                 model_data.set(field.name, value)
