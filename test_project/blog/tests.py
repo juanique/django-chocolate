@@ -10,13 +10,6 @@ from api import api
 from blog.models import Entry, Comment, Movie, Actor
 
 
-class DuplicateUniqueValue(Exception):
-       def __init__(self, value):
-           self.parameter = value
-       def __str__(self):
-           return repr(self.parameter)
-
-
 class BaseTestCase(TestCase):
 
     def assertInstanceOf(self, class_obj, instance):
