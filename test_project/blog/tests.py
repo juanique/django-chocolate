@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 from django.test import TestCase
 from django.contrib.auth.models import User
+from mock import patch
 
 from chocolate.models import ModelFactory, Mockup
+from chocolate.generators import CharFieldGenerator
 from chocolate.rest import TastyFactory
 from api import api
 from blog.models import Entry, Comment, Movie, Actor
@@ -239,3 +241,19 @@ class MockupDefaultValues(ChocolateTestCase):
 
         movie = self.modelfactory["movie"].create()
         self.assertEquals(0 , movie.score)
+
+
+class DuplicateUniqueValuesTests(ChocolateTestCase):
+        
+    @patch.object(CharFieldGenerator, 'get_value')
+    def test_throw_exception_duplicate_unique_value(self, mock_my_method):
+        "It must return different value if an unique value is duplicated"
+
+        list_of_return_values= [u'Movie_1', u'Movie_2', u'Movie_2']
+        def side_effect():
+            return list_of_return_values.pop()
+        mock_my_method.side_effect = side_effect
+
+        movie_1 = self.modelfactory["movie"].create()
+        movie_2 = self.modelfactory["movie"].create()
+        self.assertNotEquals(movie_1.name, movie_2.name)
