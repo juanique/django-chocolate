@@ -149,7 +149,8 @@ class MockupData(object):
             manager = getattr(model, tomany_field)
             related_model = manager.model
 
-            reverse_related_name = get_field_from_related_name(related_model, tomany_field)
+            reverse_related_name = get_field_from_related_name(
+                related_model, tomany_field)
 
             if type(values) is int:
                 objs = []
@@ -196,7 +197,8 @@ class MockupData(object):
                     is_tomany = isinstance(
                         field_obj,
                         ForeignRelatedObjectsDescriptor)
-                    is_tomany = is_tomany or isinstance(field_obj, ManyRelatedObjectsDescriptor)
+                    is_tomany = is_tomany or isinstance(
+                        field_obj, ManyRelatedObjectsDescriptor)
                 except AttributeError:
                     #probably a to-many field with no reverse relationship
                     #defined
@@ -218,7 +220,10 @@ class Mockup(object):
 
     @staticmethod
     def generate_value(field, model_data=None):
-        "Obtains a automatically generated value for a given a django model field"
+        """Obtains a automatically generated value for a given a django model
+        field
+
+        """
         value = None
         if field.default is not NOT_PROVIDED:
             if type(field.default) in [types.FunctionType, types.LambdaType]:
@@ -236,9 +241,10 @@ class Mockup(object):
             if field.unique:
                 while True:
                     try:
-                        field.model.objects.get(**{field.name:value})
+                        field.model.objects.get(**{field.name: value})
                         value = generator.get_value()
-                    except: break;
+                    except:
+                        break
         if value is not None:
             if model_data:
                 model_data.set(field.name, value)

@@ -44,7 +44,8 @@ class CustomMockupTestCase(BaseTestCase):
 
         def mockup_data(self, data, **kwargs):
             first_name = data.force.get('first_name')
-            user = CustomMockupTestCase.modelfactory['user'].create(first_name=first_name)
+            user = CustomMockupTestCase.modelfactory['user'].create(
+                first_name=first_name)
             data.set("author", user)
 
     @classmethod
@@ -52,7 +53,6 @@ class CustomMockupTestCase(BaseTestCase):
         cls.modelfactory = ModelFactory()
         cls.modelfactory.register(User, cls.UserMockup)
         cls.modelfactory.register(Comment, cls.CommentMockup)
-
 
     def test_custom_mockup(self):
         """Custom mockup clases can be used"""
@@ -159,7 +159,8 @@ class MockupResourceTests(ChocolateTestCase):
     def test_example_get(self):
         "It can generate a sample get response."
 
-        get_data = self.tastyfactory['entry'].create_get_data(content="Some content")
+        get_data = self.tastyfactory['entry'].create_get_data(
+            content="Some content")
 
         self.assertInstanceOf(dict, get_data)
         self.assertEquals("Some content", get_data['content'])
@@ -167,7 +168,8 @@ class MockupResourceTests(ChocolateTestCase):
     def test_example_post(self):
         "It can generate a sample post data."
 
-        post_data = self.tastyfactory['comment'].create_post_data(content="Some content")
+        post_data = self.tastyfactory['comment'].create_post_data(
+            content="Some content")
 
         self.assertInstanceOf(dict, post_data)
         self.assertEquals("Some content", post_data['content'])
@@ -177,7 +179,8 @@ class MockupResourceTests(ChocolateTestCase):
         "When creating mockup test data, foreign rels can be forced."
 
         blog_entry_uri, blog_entry = self.tastyfactory['entry'].create()
-        post_data = self.tastyfactory['comment'].create_post_data(entry=blog_entry)
+        post_data = self.tastyfactory['comment'].create_post_data(
+            entry=blog_entry)
 
         self.assertInstanceOf(dict, post_data)
         self.assertEquals(blog_entry_uri, post_data['entry'])
@@ -215,7 +218,8 @@ class CustomMockupTests(BaseTestCase):
 
         def mockup_data(self, data, **kwargs):
             first_name = data.force.get('first_name')
-            user = CustomMockupTestCase.modelfactory['user'].create(first_name=first_name)
+            user = CustomMockupTestCase.modelfactory['user'].create(
+                first_name=first_name)
             data.set("author", user)
 
     @classmethod
@@ -230,28 +234,31 @@ class CustomMockupTests(BaseTestCase):
         cls.tastyfactory = TastyFactory(api, cls.modelfactory)
 
     def test_tasty_factory(self):
-        comment_uri, comment = self.tastyfactory['comment'].create(first_name="Felipe")
+        comment_uri, comment = self.tastyfactory['comment'].create(
+            first_name="Felipe")
         self.assertEqual("Felipe", comment.author.first_name)
 
 
 class MockupDefaultValues(ChocolateTestCase):
-    
+
     def test_check_default_value_on_movie_score(self):
         "It create a mockup with default values instead random"
 
         movie = self.modelfactory["movie"].create()
-        self.assertEquals(0 , movie.score)
+        self.assertEquals(0, movie.score)
 
 
 class DuplicateUniqueValuesTests(ChocolateTestCase):
-        
+
     @patch.object(CharFieldGenerator, 'get_value')
     def test_throw_exception_duplicate_unique_value(self, mock_my_method):
         "It must return different value if an unique value is duplicated"
 
-        list_of_return_values= [u'Movie_1', u'Movie_2', u'Movie_2']
+        list_of_return_values = [u'Movie_1', u'Movie_2', u'Movie_2']
+
         def side_effect():
             return list_of_return_values.pop()
+
         mock_my_method.side_effect = side_effect
 
         movie_1 = self.modelfactory["movie"].create()
