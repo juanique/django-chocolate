@@ -233,9 +233,9 @@ class CustomMockupTests(BaseTestCase):
 
 
 class MockupDefaultValues(ChocolateTestCase):
-    
+
     def test_check_default_value_on_movie_score(self):
         "It create a mockup with default values instead random"
 
         movie = self.modelfactory["movie"].create()
-        self.assertEquals(0 , movie.score)
+        self.assertEquals(0, movie.score)
