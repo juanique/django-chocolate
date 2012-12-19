@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import types
 
+from django.contrib.contenttypes.models import ContentType
 from django.db.models.fields import NOT_PROVIDED
 from django.db.models.fields.related import ManyToManyField, ForeignKey
 from django.db.models.fields.related import ManyRelatedObjectsDescriptor
@@ -56,7 +57,8 @@ class ModelFactory(object):
     def get_key(self, model):
         key = model
         if not isinstance(model, basestring):
-            key = model.__name__
+            content_type = ContentType.objects.get_for_model(model)
+            key = "_".join(content_type.natural_key())
         return key.lower()
 
     def register(self, model, mockup_class=None):
