@@ -9,6 +9,12 @@ setup(
             '*.*',
         ]
     },
+    requires=[
+        'mock',
+    ],
+    install_requires=[
+        'mock',
+    ],
     long_description="Mockup data generation for django and django-tastypie"
 )
 
