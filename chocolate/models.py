@@ -75,12 +75,13 @@ class ModelFactory(object):
         2 keys will be added; the first one is a unique key generated
         by self.get_key. The second one will be a short version of the first
         to allow easier access.  The second key though will collide if 2 models
-        share the same name. In that case, the second key is invalidated by
-        setting a None value.
+        share the same name. In that case, the second key will point to an array
+        of mockup classes
 
         """
 
         mockup_class = mockup_class or Mockup
+        mockup = mockup_class(model, self)
 
         key = self.get_key(model)
 
@@ -90,21 +91,24 @@ class ModelFactory(object):
         # if the second key was registered and the key is new
         if second_key in self.mockups and key not in self.mockups:
             # invalidate the second key since it now creates a collision
-            self.mockups[second_key] = None
+            if type(self.mockups[second_key]) is list:
+                self.mockups[second_key].append(mockup)
+            else:
+                self.mockups[second_key] = [self.mockups[second_key], mockup]
         else:
-            self.mockups[second_key] = mockup_class(model, self)
+            self.mockups[second_key] = mockup
 
-        self.mockups[key] = mockup_class(model, self)
+        self.mockups[key] = mockup
 
 
     def __getitem__(self, model):
-        """ returns a mockup class using the model parameter which can be
+        """ returns a mockup using the model parameter which can be
         a django Model or an instance of a basestring """
 
         key = self.get_key(model)
 
         try:
-            mockup_class = self.mockups[key]
+            mockup = self.mockups[key]
         except KeyError:
             if not isinstance(model, basestring):
                 self.register(model)
@@ -115,10 +119,10 @@ class ModelFactory(object):
 
         # Now, a None mockup class would mean that the key is no longer valid
         # this is only caused when two models have the same name
-        if mockup_class is None:
+        if type(mockup) is list:
             raise MultipleMockupsReturned(key)
 
-        return mockup_class
+        return mockup
 
 
 class MockupData(object):
