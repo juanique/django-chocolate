@@ -55,10 +55,12 @@ class ModelFactory(object):
         self.mockups = {}
 
     def get_key(self, model):
+        """ Returns the key of a mockup class for a given model """
         key = model
         if not isinstance(model, basestring):
             content_type = ContentType.objects.get_for_model(model)
-            key = "_".join(content_type.natural_key())
+            key = ".".join(content_type.natural_key())
+
         return key.lower()
 
     def register(self, model, mockup_class=None):
