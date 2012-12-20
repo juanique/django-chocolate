@@ -4,10 +4,13 @@ from django.contrib.auth.models import User
 from mock import patch
 
 from chocolate.models import ModelFactory, Mockup
+from chocolate.models import UnregisteredModel, MultipleMockupsReturned
+
 from chocolate.generators import CharFieldGenerator
 from chocolate.rest import TastyFactory
 from api import api
 from blog.models import Entry, Comment, Movie, Actor
+from zombie_blog.models import Entry as ZombieEntry
 
 
 class BaseTestCase(TestCase):
@@ -44,7 +47,7 @@ class CustomMockupTestCase(BaseTestCase):
 
         def mockup_data(self, data, **kwargs):
             first_name = data.force.get('first_name')
-            user = CustomMockupTestCase.modelfactory['user'].create(
+            user = CustomMockupTestCase.modelfactory[User].create(
                 first_name=first_name)
             data.set("author", user)
 
@@ -57,13 +60,13 @@ class CustomMockupTestCase(BaseTestCase):
     def test_custom_mockup(self):
         """Custom mockup clases can be used"""
 
-        user = self.modelfactory['user'].create()
+        user = self.modelfactory[User].create()
         self.assertEquals("Juan", user.first_name)
 
     def test_rewrite_default(self):
         """Custom top default values"""
 
-        user = self.modelfactory['user'].create(first_name="Felipe")
+        user = self.modelfactory[User].create(first_name="Felipe")
         self.assertEquals("Felipe", user.first_name)
 
     def test_custom_nested_mockup(self):
@@ -218,7 +221,7 @@ class CustomMockupTests(BaseTestCase):
 
         def mockup_data(self, data, **kwargs):
             first_name = data.force.get('first_name')
-            user = CustomMockupTestCase.modelfactory['user'].create(
+            user = CustomMockupTestCase.modelfactory[User].create(
                 first_name=first_name)
             data.set("author", user)
 
@@ -252,7 +255,7 @@ class DuplicateUniqueValuesTests(ChocolateTestCase):
 
     @patch.object(CharFieldGenerator, 'get_value')
     def test_throw_exception_duplicate_unique_value(self, mock_my_method):
-        "It must return different value if an unique value is duplicated"
+        """It must return different value if an unique value is duplicated"""
 
         list_of_return_values = [u'Movie_1', u'Movie_2', u'Movie_2']
 
@@ -264,3 +267,32 @@ class DuplicateUniqueValuesTests(ChocolateTestCase):
         movie_1 = self.modelfactory["movie"].create()
         movie_2 = self.modelfactory["movie"].create()
         self.assertNotEquals(movie_1.name, movie_2.name)
+
+
+class RepeatedModelNameTests(ChocolateTestCase):
+    """ Tests for the case in which different apps have models with the same
+    name
+
+    """
+
+    def test_models_with_same_name(self):
+        """ tests the __getitem__ method of the model factory when models with
+        the same are registered
+
+        """
+        # test that pre-registering the zombie_blog.models.Entry model,
+        # everything works as usual
+
+        self.modelfactory["entry"].create()
+        self.modelfactory["blog.entry"].create()
+        self.modelfactory[Entry].create()
+        with self.assertRaises(UnregisteredModel):
+            self.modelfactory["zombie_blog.entry"].create()
+
+        # now register the ZombieEntry
+        self.modelfactory.register(ZombieEntry)
+
+        with self.assertRaises(MultipleMockupsReturned):
+            self.modelfactory["entry"].create()
+        self.modelfactory["blog.entry"].create()
+        self.modelfactory["zombie_blog.entry"].create()
