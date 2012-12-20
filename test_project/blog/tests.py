@@ -11,6 +11,8 @@ from chocolate.rest import TastyFactory
 from api import api
 from blog.models import Entry, Comment, Movie, Actor
 from zombie_blog.models import Entry as ZombieEntry
+from zombie_blog.models import User as ZombieUser
+from zombie_blog.models import GutturalComment
 
 
 class BaseTestCase(TestCase):
@@ -276,8 +278,8 @@ class RepeatedModelNameTests(ChocolateTestCase):
     """
 
     def test_models_with_same_name(self):
-        """ tests the __getitem__ method of the model factory when models with
-        the same are registered
+        """ tests that the __getitem__ method of ModelFactory correctly
+        throws exceptions when models with the same name are registered
 
         """
         # test that pre-registering the zombie_blog.models.Entry model,
@@ -296,3 +298,47 @@ class RepeatedModelNameTests(ChocolateTestCase):
             self.modelfactory["entry"].create()
         self.modelfactory["blog.entry"].create()
         self.modelfactory["zombie_blog.entry"].create()
+
+
+class ModelInheritanceTests(ChocolateTestCase):
+    """ Tests for the case in which model inheritance is applied """
+
+
+    def test_model_inheritance(self):
+        """ tests that the __getitem__ method of ModelFactory correctly
+        throws exceptions when a registered model inherits from other model.
+
+        """
+
+        self.modelfactory.register(GutturalComment)
+
+        comment_count = Comment.objects.all().count()
+        gutural_comment_count = GutturalComment.objects.all().count()
+
+        self.modelfactory[GutturalComment].create()
+
+        self.assertEquals(comment_count + 1, Comment.objects.all().count())
+        self.assertEquals(gutural_comment_count + 1,
+                          GutturalComment.objects.count())
+
+    def test_same_name_model_inheritance(self):
+        """ tests that the __getitem__ method of ModelFactory correctly
+        throws exceptions when a registered model inherits from other model
+        with the same name
+
+        """
+        # test that pre-registering the zombie_blog.models.User model,
+        # everything works as usual
+        self.modelfactory["user"].create()
+        self.modelfactory["auth.user"].create()
+        self.modelfactory[User].create()
+        with self.assertRaises(UnregisteredModel):
+            self.modelfactory["zombie_blog.user"].create()
+
+        # now register the ZombieUser
+        self.modelfactory.register(ZombieUser)
+
+        with self.assertRaises(MultipleMockupsReturned):
+            self.modelfactory["user"].create()
+        self.modelfactory["auth.user"].create()
+        self.modelfactory["zombie_blog.user"].create()
