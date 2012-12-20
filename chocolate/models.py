@@ -84,16 +84,18 @@ class ModelFactory(object):
 
         key = self.get_key(model)
 
-        self.mockups[key] = mockup_class(model, self)
-
         # obtain the name of the model
         second_key = key.split(".")[1]
 
-        if second_key in self.mockups:
-            # invalidate the second key since it now creates a collition
+        # if the second key was registered and the key is new
+        if second_key in self.mockups and key not in self.mockups:
+            # invalidate the second key since it now creates a collision
             self.mockups[second_key] = None
         else:
             self.mockups[second_key] = mockup_class(model, self)
+
+        self.mockups[key] = mockup_class(model, self)
+
 
     def __getitem__(self, model):
         """ returns a mockup class using the model parameter which can be
