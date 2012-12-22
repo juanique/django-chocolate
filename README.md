@@ -1,6 +1,6 @@
 #### django-chocolate
 
-A mockup library for django and django-tastytools.
+A mockup library for django and django-tastypie.
 
 #### How to use
 
