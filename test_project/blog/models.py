@@ -15,6 +15,11 @@ class Comment(models.Model):
     created = models.DateTimeField()
 
 
+class SmartTag(models.Model):
+    entry = models.ForeignKey(Entry, related_name='smart_tags')
+    name = models.CharField(max_length=32)
+
+
 class Actor(models.Model):
     name = models.CharField(max_length=32)
 
