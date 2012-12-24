@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import sys
+
 from django.test import TestCase
 from django.contrib.auth.models import User
 from mock import patch
@@ -6,8 +8,8 @@ from mock import patch
 from chocolate.models import ModelFactory, Mockup
 from chocolate.generators import CharFieldGenerator
 from chocolate.rest import TastyFactory
-from api import api
-from blog.models import Entry, Comment, Movie, Actor
+from api import *
+from blog.models import Entry, Comment, SmartTag, Movie, Actor
 
 
 class BaseTestCase(TestCase):
@@ -27,6 +29,7 @@ class ChocolateTestCase(BaseTestCase):
         cls.modelfactory.register(Entry)
         cls.modelfactory.register(User)
         cls.modelfactory.register(Comment)
+        cls.modelfactory.register(SmartTag)
         cls.modelfactory.register(Movie)
         cls.modelfactory.register(Actor)
 
@@ -210,6 +213,17 @@ class MockupResourceTests(ChocolateTestCase):
         post_data = self.tastyfactory['comment'].create_post_data()
         self.assertTrue('resource_uri' not in post_data)
         self.assertTrue('id' not in post_data)
+
+    def test_key_can_equal_resource_name(self):
+        """The key will be based upon the 'resource_name' attribute if it
+        exists."""
+        resources = self.tastyfactory.api._canonicals
+        for i in resources:
+            key = self.tastyfactory.get_key(resources[i])
+            base = resources[i].__class__.__name__
+            base_class = getattr(sys.modules[__name__], base)
+            if hasattr(base_class.Meta, 'resource_name'):
+                self.assertEqual(key, base_class.Meta.resource_name)
 
 
 class CustomMockupTests(BaseTestCase):
