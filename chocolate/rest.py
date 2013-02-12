@@ -127,7 +127,10 @@ class TastyFactory(object):
     def get_key(self, resource):
         key = resource
         if isinstance(resource, ModelResource):
-            key = resource.__class__.__name__
+            if hasattr(resource._meta, 'resource_name'):
+                key = resource._meta.resource_name
+            else:
+                key = resource.__class__.__name__
 
         key = key.lower()
 
