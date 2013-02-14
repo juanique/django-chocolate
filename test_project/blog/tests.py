@@ -1,15 +1,25 @@
 # -*- coding: utf-8 -*-
+""" tests for the blog app """
 import sys
+
+from api import *
 
 from django.test import TestCase
 from django.contrib.auth.models import User
+
 from mock import patch
 
 from chocolate.models import ModelFactory, Mockup
+from chocolate.models import UnregisteredModel, MultipleMockupsReturned
 from chocolate.generators import CharFieldGenerator
 from chocolate.rest import TastyFactory
-from api import *
+
 from blog.models import Entry, Comment, SmartTag, Movie, Actor
+
+from zombie_blog.models import Entry as ZombieEntry
+from zombie_blog.models import User as ZombieUser
+from zombie_blog.models import GutturalComment
+
 
 
 class BaseTestCase(TestCase):
@@ -47,7 +57,7 @@ class CustomMockupTestCase(BaseTestCase):
 
         def mockup_data(self, data, **kwargs):
             first_name = data.force.get('first_name')
-            user = CustomMockupTestCase.modelfactory['user'].create(
+            user = CustomMockupTestCase.modelfactory[User].create(
                 first_name=first_name)
             data.set("author", user)
 
@@ -60,13 +70,13 @@ class CustomMockupTestCase(BaseTestCase):
     def test_custom_mockup(self):
         """Custom mockup clases can be used"""
 
-        user = self.modelfactory['user'].create()
+        user = self.modelfactory[User].create()
         self.assertEquals("Juan", user.first_name)
 
     def test_rewrite_default(self):
         """Custom top default values"""
 
-        user = self.modelfactory['user'].create(first_name="Felipe")
+        user = self.modelfactory[User].create(first_name="Felipe")
         self.assertEquals("Felipe", user.first_name)
 
     def test_custom_nested_mockup(self):
@@ -232,7 +242,7 @@ class CustomMockupTests(BaseTestCase):
 
         def mockup_data(self, data, **kwargs):
             first_name = data.force.get('first_name')
-            user = CustomMockupTestCase.modelfactory['user'].create(
+            user = CustomMockupTestCase.modelfactory[User].create(
                 first_name=first_name)
             data.set("author", user)
 
@@ -266,7 +276,7 @@ class DuplicateUniqueValuesTests(ChocolateTestCase):
 
     @patch.object(CharFieldGenerator, 'get_value')
     def test_throw_exception_duplicate_unique_value(self, mock_my_method):
-        "It must return different value if an unique value is duplicated"
+        """It must return different value if an unique value is duplicated"""
 
         list_of_return_values = [u'Movie_1', u'Movie_2', u'Movie_2']
 
@@ -278,3 +288,76 @@ class DuplicateUniqueValuesTests(ChocolateTestCase):
         movie_1 = self.modelfactory["movie"].create()
         movie_2 = self.modelfactory["movie"].create()
         self.assertNotEquals(movie_1.name, movie_2.name)
+
+
+class RepeatedModelNameTests(ChocolateTestCase):
+    """ Tests for the case in which different apps have models with the same
+    name
+
+    """
+
+    def test_models_with_same_name(self):
+        """ tests that the __getitem__ method of ModelFactory correctly
+        throws exceptions when models with the same name are registered
+
+        """
+        # test that pre-registering the zombie_blog.models.Entry model,
+        # everything works as usual
+
+        self.modelfactory["entry"].create()
+        self.modelfactory["blog.entry"].create()
+        self.modelfactory[Entry].create()
+        with self.assertRaises(UnregisteredModel):
+            self.modelfactory["zombie_blog.entry"].create()
+
+        # now register the ZombieEntry
+        self.modelfactory.register(ZombieEntry)
+
+        with self.assertRaises(MultipleMockupsReturned):
+            self.modelfactory["entry"].create()
+        self.modelfactory["blog.entry"].create()
+        self.modelfactory["zombie_blog.entry"].create()
+
+
+class ModelInheritanceTests(ChocolateTestCase):
+    """ Tests for the case in which model inheritance is applied """
+
+
+    def test_model_inheritance(self):
+        """ tests that the __getitem__ method of ModelFactory correctly
+        throws exceptions when a registered model inherits from other model.
+
+        """
+
+        self.modelfactory.register(GutturalComment)
+
+        comment_count = Comment.objects.all().count()
+        gutural_comment_count = GutturalComment.objects.all().count()
+
+        self.modelfactory[GutturalComment].create()
+
+        self.assertEquals(comment_count + 1, Comment.objects.all().count())
+        self.assertEquals(gutural_comment_count + 1,
+                          GutturalComment.objects.count())
+
+    def test_same_name_model_inheritance(self):
+        """ tests that the __getitem__ method of ModelFactory correctly
+        throws exceptions when a registered model inherits from other model
+        with the same name
+
+        """
+        # test that pre-registering the zombie_blog.models.User model,
+        # everything works as usual
+        self.modelfactory["user"].create()
+        self.modelfactory["auth.user"].create()
+        self.modelfactory[User].create()
+        with self.assertRaises(UnregisteredModel):
+            self.modelfactory["zombie_blog.user"].create()
+
+        # now register the ZombieUser
+        self.modelfactory.register(ZombieUser)
+
+        with self.assertRaises(MultipleMockupsReturned):
+            self.modelfactory["user"].create()
+        self.modelfactory["auth.user"].create()
+        self.modelfactory["zombie_blog.user"].create()

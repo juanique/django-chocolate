@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import types
 
+from django.contrib.contenttypes.models import ContentType
 from django.db.models.fields import NOT_PROVIDED
 from django.db.models.fields.related import ManyToManyField, ForeignKey
 from django.db.models.fields.related import ManyRelatedObjectsDescriptor
@@ -37,6 +38,9 @@ FIELDCLASS_TO_GENERATOR = {
 class UnregisteredModel(Exception):
     pass
 
+class MultipleMockupsReturned(Exception):
+    pass
+
 
 def get_field_from_related_name(model_class, related_name):
     for field in model_class._meta.local_fields:
@@ -54,29 +58,71 @@ class ModelFactory(object):
         self.mockups = {}
 
     def get_key(self, model):
+        """ Returns the key of a mockup class for a given model """
         key = model
         if not isinstance(model, basestring):
-            key = model.__name__
+            content_type = ContentType.objects.get_for_model(model)
+            key = ".".join(content_type.natural_key())
+
         return key.lower()
 
     def register(self, model, mockup_class=None):
-        """Registers a model to allow mockup creations of that model."""
+        """Registers a model to allow mockup creations of that model.
+
+        This registration simply consists of adding keys into the self.mockups
+        array.
+
+        2 keys will be added; the first one is a unique key generated
+        by self.get_key. The second one will be a short version of the first
+        to allow easier access.  The second key though will collide if 2 models
+        share the same name. In that case, the second key will point to an array
+        of mockup classes
+
+        """
 
         mockup_class = mockup_class or Mockup
+        mockup = mockup_class(model, self)
 
         key = self.get_key(model)
-        self.mockups[key] = mockup_class(model, self)
+
+        # obtain the name of the model
+        second_key = key.split(".")[1]
+
+        # if the second key was registered and the key is new
+        if second_key in self.mockups and key not in self.mockups:
+            # invalidate the second key since it now creates a collision
+            if type(self.mockups[second_key]) is list:
+                self.mockups[second_key].append(mockup)
+            else:
+                self.mockups[second_key] = [self.mockups[second_key], mockup]
+        else:
+            self.mockups[second_key] = mockup
+
+        self.mockups[key] = mockup
+
 
     def __getitem__(self, model):
+        """ returns a mockup using the model parameter which can be
+        a django Model or an instance of a basestring """
+
         key = self.get_key(model)
 
         try:
-            return self.mockups[key]
+            mockup = self.mockups[key]
         except KeyError:
             if not isinstance(model, basestring):
                 self.register(model)
                 return self[model]
             raise UnregisteredModel(key)
+
+        # there was no key error, so the key was registered.
+
+        # Now, a None mockup class would mean that the key is no longer valid
+        # this is only caused when two models have the same name
+        if type(mockup) is list:
+            raise MultipleMockupsReturned(key)
+
+        return mockup
 
 
 class MockupData(object):
