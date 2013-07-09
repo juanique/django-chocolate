@@ -57,6 +57,7 @@ class CustomMockupTestCase(BaseTestCase):
             user = CustomMockupTestCase.modelfactory[User].create(
                 first_name=first_name)
             data.set("author", user)
+            data.set("rating", None)
 
     @classmethod
     def setUpClass(cls):
@@ -81,6 +82,12 @@ class CustomMockupTestCase(BaseTestCase):
 
         comment = self.modelfactory['comment'].create(first_name="Felipe")
         self.assertEquals('Felipe', comment.author.first_name)
+
+    def test_none_values_in_data(self):
+        """Custom Comment mockup with None value for the rating attribute"""
+
+        comment = self.modelfactory['comment'].create(first_name="Felipe")
+        self.assertIsNone(comment.rating)
 
 
 class MockupTests(ChocolateTestCase):
