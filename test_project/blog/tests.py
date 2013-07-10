@@ -236,9 +236,9 @@ class MockupResourceTests(ChocolateTestCase):
             resource = resources[resource_name]
             key = self.tastyfactory.get_key(resource)
 
-            # calling the canonical_resource_for method is a way of asserting
+            # Calling the canonical_resource_for method is a way of asserting
             # the key used by the tasty factory is the resource_name of the
-            #  resource class
+            # resource class.
             api.canonical_resource_for(key)
 
 
