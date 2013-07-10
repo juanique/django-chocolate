@@ -13,6 +13,7 @@ class Comment(models.Model):
     content = models.TextField()
     author = models.ForeignKey(User)
     created = models.DateTimeField()
+    rating = models.IntegerField(null=True)
 
 
 class SmartTag(models.Model):

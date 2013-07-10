@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 """ tests for the blog app """
-import sys
-
-from api import *
+from api import api
 
 from django.test import TestCase
 from django.contrib.auth.models import User
@@ -19,7 +17,6 @@ from blog.models import Entry, Comment, SmartTag, Movie, Actor
 from zombie_blog.models import Entry as ZombieEntry
 from zombie_blog.models import User as ZombieUser
 from zombie_blog.models import GutturalComment
-
 
 
 class BaseTestCase(TestCase):
@@ -60,6 +57,7 @@ class CustomMockupTestCase(BaseTestCase):
             user = CustomMockupTestCase.modelfactory[User].create(
                 first_name=first_name)
             data.set("author", user)
+            data.set("rating", None)
 
     @classmethod
     def setUpClass(cls):
@@ -84,6 +82,12 @@ class CustomMockupTestCase(BaseTestCase):
 
         comment = self.modelfactory['comment'].create(first_name="Felipe")
         self.assertEquals('Felipe', comment.author.first_name)
+
+    def test_none_values_in_data(self):
+        """Custom Comment mockup with None value for the rating attribute"""
+
+        comment = self.modelfactory['comment'].create(first_name="Felipe")
+        self.assertIsNone(comment.rating)
 
 
 class MockupTests(ChocolateTestCase):
@@ -228,12 +232,14 @@ class MockupResourceTests(ChocolateTestCase):
         """The key will be based upon the 'resource_name' attribute if it
         exists."""
         resources = self.tastyfactory.api._canonicals
-        for i in resources:
-            key = self.tastyfactory.get_key(resources[i])
-            base = resources[i].__class__.__name__
-            base_class = getattr(sys.modules[__name__], base)
-            if hasattr(base_class.Meta, 'resource_name'):
-                self.assertEqual(key, base_class.Meta.resource_name)
+        for resource_name in resources:
+            resource = resources[resource_name]
+            key = self.tastyfactory.get_key(resource)
+
+            # Calling the canonical_resource_for method is a way of asserting
+            # the key used by the tasty factory is the resource_name of the
+            # resource class.
+            api.canonical_resource_for(key)
 
 
 class CustomMockupTests(BaseTestCase):
@@ -321,7 +327,6 @@ class RepeatedModelNameTests(ChocolateTestCase):
 
 class ModelInheritanceTests(ChocolateTestCase):
     """ Tests for the case in which model inheritance is applied """
-
 
     def test_model_inheritance(self):
         """ tests that the __getitem__ method of ModelFactory correctly

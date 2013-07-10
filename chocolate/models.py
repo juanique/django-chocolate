@@ -163,8 +163,7 @@ class MockupData(object):
             obj = self.factory[model].create()
             self.data[name] = obj
             return
-
-        if constant is not None:
+        else:
             self.data[name] = constant
             return
 
